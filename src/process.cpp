@@ -23,7 +23,7 @@ int Process::Pid() const {
 
 // TODO: Return this process's CPU utilization
 float Process::CpuUtilization() { 
-    auto activetime = float(LinuxParser::ActiveJiffies(Pid()) / 100.f);
+    auto activetime = float(LinuxParser::ActiveJiffies(Pid()) / sysconf(_SC_CLK_TCK));
     auto uptime = float(LinuxParser::UpTime(Pid()));
     return float(activetime / uptime);
 }
