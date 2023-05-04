@@ -109,18 +109,32 @@ long LinuxParser::Jiffies() {
   return total;
 }
 
-long LinuxParser::ActiveJiffies(int pid) { 
+long LinuxParser::ActiveJiffies(int pid) {
+  long totaltime;
   string line, value;
   vector<string> values;
   std::ifstream stream(kProcDirectory + std::to_string(pid) + kStatFilename);
+  long utime = 0, stime = 0, cutime = 0, cstime = 0;
+  
   if (stream.is_open()) {
     std::getline(stream, line);
-    std::istringstream streamline(line);
-    while (streamline >> value) {
+    std::istringstream linestream(line);
+    while (linestream >> value) {
       values.push_back(value);
     }
+
+    if (std::all_of(values[13].begin(), values[13].end(), isdigit))
+      utime = stol(values[13]);
+    if (std::all_of(values[14].begin(), values[14].end(), isdigit))
+      stime = stol(values[14]);
+    if (std::all_of(values[15].begin(), values[15].end(), isdigit))
+      cutime = stol(values[15]);
+    if (std::all_of(values[16].begin(), values[16].end(), isdigit))
+      cstime = stol(values[16]);
   }
-  return stol(values[13] + values[14]);
+  
+  totaltime = utime + stime + cutime + cstime;
+  return totaltime ;
 }
 
 long LinuxParser::ActiveJiffies() { 
@@ -204,7 +218,7 @@ string LinuxParser::Ram(int pid) {
 
 string LinuxParser::Uid(int pid) { 
   string line, key, uid;
-  std::ifstream stream(kProcDirectory + to_string(pid) + kStatFilename);
+  std::ifstream stream(kProcDirectory + to_string(pid) + kStatusFilename);
   if (stream.is_open()) {
     while (std::getline(stream, line)) {
       std::istringstream linestream(line);
@@ -247,5 +261,5 @@ long LinuxParser::UpTime(int pid) {
       values.push_back(value);
     };
   }
-  return LinuxParser::UpTime() - (stol(values[21]) / 100);
+  return LinuxParser::UpTime() - (stol(values[21]) / sysconf(_SC_CLK_TCK));
 }
